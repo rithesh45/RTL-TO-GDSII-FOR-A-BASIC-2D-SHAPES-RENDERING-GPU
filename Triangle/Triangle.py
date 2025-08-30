@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import re
 
 # Input file
-filename = "tri_sim.txt"
+filename = "tri_sim.txt" #edit the file name here 
 
 x_coords = []
 y_coords = []
