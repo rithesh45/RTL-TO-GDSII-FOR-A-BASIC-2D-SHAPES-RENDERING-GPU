@@ -50,7 +50,9 @@ module rect_draw (
                     px <= x;
                     py <= y;
                     pixel_color <= color;
-                    pixel_valid <= (x >= x0 && x <= x1 && y >= y0 && y <= y1) ? 1 : 0;  // For filled; adjust for outline if needed
+                   pixel_valid <= (fill_enable) ? 
+               (x >= x0 && x <= x1 && y >= y0 && y <= y1) : 
+               ((x == x0 || x == x1 || y == y0 || y == y1) && x >= x0 && x <= x1 && y >= y0 && y <= y1) ? 1 : 0;
 
                     // Increment for next pixel
                     if (x < x1) begin
