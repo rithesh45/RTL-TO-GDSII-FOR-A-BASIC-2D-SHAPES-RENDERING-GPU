@@ -1,0 +1,6 @@
+  // Define triangle vertices after reset
+        #10;
+        x0 = 30; y0 = 0;
+        x1 = 50; y1 = 40;
+        x2 = 30; y2 = 40;
+        start = 1; // Start rasterization
