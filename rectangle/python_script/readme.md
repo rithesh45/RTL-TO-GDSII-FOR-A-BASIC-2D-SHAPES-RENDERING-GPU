@@ -13,7 +13,7 @@ pip3 install numpy
 ```
 then you have to write your verilog file and test bench file , copy as it is given 
 next you have to write this python code ,
-it constructs the shapes from the simulation log file , named as <br>"sim_out.txt"</br> file
+it constructs the shapes from the simulation log file , named as <mark>"sim_out.txt"</mark> file
 
 the code is :
 ```python
