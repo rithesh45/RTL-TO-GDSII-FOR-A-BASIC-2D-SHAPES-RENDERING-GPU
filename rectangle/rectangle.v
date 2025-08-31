@@ -1,7 +1,6 @@
-
 `timescale 1ns/1ps
 
-module rect_draw (
+module rectangle (
     input  wire        clk,           // Clock input
     input  wire        rst,           // Active-high reset
     input  wire        start,         // Start pulse
@@ -40,9 +39,15 @@ module rect_draw (
                     pixel_valid <= 0;
                     done <= 0;
                     if (start) begin
-                        x <= x0;
-                        y <= y0;
-                        state <= DRAW;
+                        // Validate coordinates
+                        if (x1 < x0 || y1 < y0 || x0 > 255 || y0 > 255 || x1 > 255 || y1 > 255) begin
+                            $display("Error: Invalid rectangle (x0=%d, y0=%d, x1=%d, y1=%d)", x0, y0, x1, y1);
+                            state <= FINISH; // Skip drawing
+                        end else begin
+                            x <= x0;
+                            y <= y0;
+                            state <= DRAW;
+                        end
                     end
                 end
                 DRAW: begin
@@ -50,9 +55,9 @@ module rect_draw (
                     px <= x;
                     py <= y;
                     pixel_color <= color;
-                   pixel_valid <= (fill_enable) ? 
-               (x >= x0 && x <= x1 && y >= y0 && y <= y1) : 
-               ((x == x0 || x == x1 || y == y0 || y == y1) && x >= x0 && x <= x1 && y >= y0 && y <= y1) ? 1 : 0;
+                    pixel_valid <= (fill_enable) ? 
+                        (x >= x0 && x <= x1 && y >= y0 && y <= y1) : 
+                        ((x == x0 || x == x1 || y == y0 || y == y1) && x >= x0 && x <= x1 && y >= y0 && y <= y1) ? 1 : 0;
 
                     // Increment for next pixel
                     if (x < x1) begin
@@ -80,4 +85,3 @@ module rect_draw (
     end
 
 endmodule
-
