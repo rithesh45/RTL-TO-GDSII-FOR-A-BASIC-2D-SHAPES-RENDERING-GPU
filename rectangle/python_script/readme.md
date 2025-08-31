@@ -15,7 +15,7 @@ then you have to write your verilog file and test bench file , copy as it is giv
 Next you have to write this python code ,
 it constructs the shapes from the simulation log file , named as <mark>"sim_out.txt"</mark> file
 
-the code is :
+the code is : <mark>visualize_from_out_txt.py</mark>
 ```python
 
 
