@@ -1,3 +1,5 @@
+
+###commands on linux , before beginning with the simulation :
 ```
 # Install Python 3 (if not already installed)
 sudo apt-get update
