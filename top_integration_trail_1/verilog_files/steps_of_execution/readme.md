@@ -4,5 +4,5 @@ to run the file
 2. step 2 : <mark> vvp simfile > sim_out.txt </mark>
 3. step 3 : <mark>python3 animate_gpu.py</mark>  or  <mark>python3 display_gpu.py</mark>
 
-NOTE : make sure all files are in same directory python extensions are installed
+NOTE : make sure all files are in same directory and python extensions are installed
   
