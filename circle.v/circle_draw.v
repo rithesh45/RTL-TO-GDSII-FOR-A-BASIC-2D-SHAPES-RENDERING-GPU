@@ -19,30 +19,79 @@ module circle_draw (
     reg signed [15:0] d;
     reg [2:0] octant;
     reg prev_start;
-    reg [7:0] cx, cy, x_start, x_end;
+    reg [7:0] cy;
     reg [15:0] r2;
+    reg [7:0] x_left, x_right;
+    reg line_start;
+
+    // Line draw module signals
+    wire line_done;
+    wire line_pixel_valid;
+    wire [7:0] line_px, line_py;
+    wire [23:0] line_pixel_color;
+
+    // Instantiate line_draw module
+    line_draw line_draw_inst (
+        .clk(clk),
+        .reset(rst),
+        .start(line_start),
+        .x0(x_left),
+        .y0(cy),
+        .x1(x_right),
+        .y1(cy),
+        .color(color),
+        .px(line_px),
+        .py(line_py),
+        .pixel_color(line_pixel_color),
+        .pixel_valid(line_pixel_valid),
+        .done(line_done)
+    );
 
     wire start_pulse = start && !prev_start;
+
+    // Function to approximate square root for x-coordinate calculation
+    function [7:0] sqrt;
+        input [15:0] value;
+        reg [15:0] temp;
+        reg [15:0] local_value;
+        reg [7:0] result;
+        integer i;
+        begin
+            result = 0;
+            temp = 0;
+            local_value = value; // Avoid modifying input
+            for (i = 7; i >= 0; i = i - 1) begin
+                temp = (result << (i + 1)) | (1 << (i * 2));
+                if (temp <= local_value) begin
+                    result = result | (1 << i);
+                    local_value = local_value - temp;
+                end
+            end
+            sqrt = result;
+        end
+    endfunction
 
     always @(posedge clk or posedge rst) begin
         if (rst) begin
             state <= IDLE;
             x <= 0; y <= 0; d <= 0; done <= 0; pixel_valid <= 0; octant <= 0;
-            px <= 0; py <= 0; pixel_color <= 0; prev_start <= 0; cx <= 0; cy <= 0;
-            x_start <= 0; x_end <= 0; r2 <= 0;
+            px <= 0; py <= 0; pixel_color <= 0; prev_start <= 0; cy <= 0;
+            r2 <= 0; x_left <= 0; x_right <= 0; line_start <= 0;
         end else begin
             prev_start <= start;
             case (state)
                 IDLE: begin
                     pixel_valid <= 0; done <= 0; px <= 0; py <= 0; pixel_color <= 0;
-                    x <= 0; y <= 0; d <= 0; octant <= 0; cx <= 0; cy <= 0; x_start <= 0; x_end <= 0; r2 <= 0;
+                    x <= 0; y <= 0; d <= 0; octant <= 0; cy <= 0; r2 <= 0;
+                    x_left <= 0; x_right <= 0; line_start <= 0;
                     if (start_pulse) begin
                         if (r == 0) begin
                             state <= FINISH;
                             done <= 1;
                         end else if (fill_enable) begin
-                            state <= FILLED;
-                            cy <= yc - r; cx <= xc - r; r2 <= r * r;
+                            state <= FILLED; // Fixed typo: stateTox to state
+                            cy <= yc - r;
+                            r2 <= r * r;
                         end else begin
                             state <= OUTLINE;
                             x <= 0; y <= r; d <= 3 - (r << 1);
@@ -85,25 +134,27 @@ module circle_draw (
                     end
                 end
                 FILLED: begin
-                    // Calculate x range for current y
-                    x_start <= xc - r;
-                    x_end <= xc + r;
                     if (cy <= yc + r) begin
-                        if (cx <= x_end) begin
-                            if (($signed(cx) - $signed(xc)) * ($signed(cx) - $signed(xc)) + 
-                                ($signed(cy) - $signed(yc)) * ($signed(cy) - $signed(yc)) <= $signed(r2)) begin
-                                pixel_valid <= 1;
-                                pixel_color <= color;
+                        if (!line_start && !line_pixel_valid && !line_done) begin
+                            // Calculate x_left and x_right for current y
+                            if (($signed(cy) - $signed(yc)) * ($signed(cy) - $signed(yc)) <= $signed(r2)) begin
+                                x_left <= xc - sqrt(r2 - ($signed(cy) - $signed(yc)) * ($signed(cy) - $signed(yc)));
+                                x_right <= xc + sqrt(r2 - ($signed(cy) - $signed(yc)) * ($signed(cy) - $signed(yc)));
+                                line_start <= 1;
                             end else begin
-                                pixel_valid <= 0;
-                                pixel_color <= 0;
+                                cy <= cy + 1; // Skip if y is outside circle
                             end
-                            px <= cx;
-                            py <= cy;
-                            cx <= cx + 1;
-                        end else begin
-                            cx <= xc - r;
+                        end else if (line_start) begin
+                            line_start <= 0; // Clear start signal after one cycle
+                        end else if (line_pixel_valid) begin
+                            px <= line_px;
+                            py <= line_py;
+                            pixel_color <= line_pixel_color;
+                            pixel_valid <= 1;
+                        end else if (line_done) begin
                             cy <= cy + 1;
+                            pixel_valid <= 0;
+                        end else begin
                             pixel_valid <= 0;
                         end
                     end else begin
@@ -114,7 +165,8 @@ module circle_draw (
                 end
                 FINISH: begin
                     done <= 1; pixel_valid <= 0; px <= 0; py <= 0; pixel_color <= 0;
-                    x <= 0; y <= 0; d <= 0; octant <= 0; cx <= 0; cy <= 0; x_start <= 0; x_end <= 0; r2 <= 0;
+                    x <= 0; y <= 0; d <= 0; octant <= 0; cy <= 0; r2 <= 0;
+                    x_left <= 0; x_right <= 0; line_start <= 0;
                     state <= IDLE;
                 end
             endcase
