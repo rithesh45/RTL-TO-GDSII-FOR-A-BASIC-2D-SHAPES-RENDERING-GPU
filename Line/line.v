@@ -1,6 +1,6 @@
 `timescale 1ns/1ps
 
-module line_draw (
+module line(
     input  wire        clk,
     input  wire        reset,
     input  wire        start,
@@ -102,4 +102,3 @@ module line_draw (
         end
     end
 endmodule
-
