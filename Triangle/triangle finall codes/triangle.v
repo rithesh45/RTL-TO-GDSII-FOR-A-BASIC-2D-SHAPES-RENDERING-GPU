@@ -1,6 +1,6 @@
 `timescale 1ns/1ps
 
-module triangle_draw #(
+module triangle #(
     parameter CORDW=8
 ) (
     input  wire                 clk,
@@ -109,4 +109,3 @@ module triangle_draw #(
     end
 
 endmodule
-
