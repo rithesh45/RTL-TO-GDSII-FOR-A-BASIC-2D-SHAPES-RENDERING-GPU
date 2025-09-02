@@ -32,7 +32,7 @@ module rasterizer (
     wire start_pulse = start && !prev_start;
 
     // Instantiate shape modules
-    line_draw line_inst (
+    line line_inst (
         .clk(clk),
         .reset(rst),
         .start(line_start),
@@ -46,12 +46,12 @@ module rasterizer (
         .done(line_done)
     );
 
-    circle_draw circle_inst (
+    circle circle_inst (
         .clk(clk),
         .rst(rst),
         .start(circle_start),
         .xc(x0), .yc(y0),
-        .r(r),
+        .r(x1),
         .fill_enable(fill_enable),
         .color(color),
         .px(circle_px),
@@ -61,7 +61,7 @@ module rasterizer (
         .done(circle_done)
     );
 
-    rect_draw rect_inst (
+    rectangle rect_inst (
         .clk(clk),
         .rst(rst),
         .start(rect_start),
@@ -76,20 +76,23 @@ module rasterizer (
         .done(rect_done)
     );
 
-    triangle_draw tri_inst (
-        .clk(clk),
-        .rst(rst),
-        .start(tri_start),
-        .x0(x0), .y0(y0),
-        .x1(x1), .y1(y1),
-        .x2(x2), .y2(y2),
-        .color(color),
-        .pixel_x(tri_px),
-        .pixel_y(tri_py),
-        .pixel_color(tri_pixel_color),
-        .pixel_valid(tri_pixel_valid),
-        .done(tri_done)
-    );
+    triangle tri_inst (
+    .clk(clk),
+    .rst(rst),
+    .start(tri_start),
+    .x0(x0), .y0(y0),
+    .x1(x1), .y1(y1),
+    .x2(x2), .y2(y2),
+    .fill_enable(fill_enable),
+    .color(color),
+    .px(tri_px),
+    .py(tri_py),
+    .pixel_color(tri_pixel_color),
+    .valid(tri_pixel_valid),
+    .done(tri_done)
+);
+
+
 
     // Start signals for each shape
     assign line_start   = (shape_sel == 2'd0) && start_pulse && (state == IDLE);
