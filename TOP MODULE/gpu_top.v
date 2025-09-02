@@ -1,46 +1,6 @@
-
-
-
 `timescale 1ns/1ps
 
-// Module: top_level
-// Description: Top-level module for a 2D GPU, integrating command_interface, controller,
-//              rasterizer, and framebuffer to process drawing commands and store pixel
-//              data. Receives 128-bit commands, generates pixels for shapes (line, circle,
-//              rectangle, triangle), and stores them in a 256x256x24-bit framebuffer.
-//              Designed for synthesis on Xilinx Spartan FPGAs (e.g., Spartan-6/7).
-// Inputs:
-//   - clk: Clock signal (e.g., 100MHz) for synchronous operation.
-//   - rst: Active-high asynchronous reset to initialize modules.
-//   - cmd_valid: Indicates cmd_data is valid for parsing.
-//   - cmd_data: 128-bit command input with fields:
-//               [127:124] - shape_type (4 bits: 0=line, 1=circle, 2=rect, 3=triangle)
-//               [123:116] - x0 (8 bits)
-//               [115:108] - y0 (8 bits)
-//               [107:100] - x1 (8 bits)
-//               [99:92]   - y1 (8 bits)
-//               [91:84]   - x2 (8 bits)
-//               [83:76]   - y2 (8 bits)
-//               [75]      - fill_enable (1 bit)
-//               [74:51]   - color (24-bit RGB)
-//               [50:27]   - bg_color (24-bit RGB)
-//               [26:0]    - unused
-//   - read_en: Enables framebuffer read operation.
-//   - read_x: 8-bit x-coordinate (0-255) for reading framebuffer.
-//   - read_y: 8-bit y-coordinate (0-255) for reading framebuffer.
-// Outputs:
-//   - cmd_ready: High when command_interface is ready (placeholder, tied to 1'b1).
-//   - read_color: 24-bit RGB color read from framebuffer.
-//   - busy: High when controller is processing a command.
-//   - done: High when rasterizer completes drawing.
-// Notes:
-//   - Rasterizer has 80% functionality: correct outline pixels (e.g., Test 4 triangle
-//     (3,3), (10,3), (6,8)) but includes gaps and incorrect pixels (e.g., (8,6) instead
-//     of (7,6)).
-//   - Framebuffer uses ~1.5Mb BRAM, compatible with Spartan FPGAs.
-//   - bg_color is parsed but unused; can be used for future clear operations.
-
-module top_level (
+module gpu_top (
     input wire clk,                  // Clock input
     input wire rst,                  // Active-high reset
     input wire cmd_valid,            // Command valid signal
@@ -67,7 +27,6 @@ module top_level (
     wire raster_done;                // Done signal from rasterizer
 
     // Instantiate command_interface
-    // Parses 128-bit cmd_data into shape parameters and generates start pulse
     command_interface cmd_inst (
         .clk(clk),
         .rst(rst),
@@ -84,7 +43,6 @@ module top_level (
     );
 
     // Instantiate controller
-    // Manages drawing process with FSM, sends trigger to rasterizer, sets busy
     controller ctrl_inst (
         .clk(clk),
         .rst(rst),
@@ -95,16 +53,15 @@ module top_level (
     );
 
     // Instantiate rasterizer
-    // Generates pixels for shapes (line, circle, rect, triangle) based on shape_type
     rasterizer raster_inst (
         .clk(clk),
         .rst(rst),
         .start(raster_start),
-        .shape_sel(shape_type[1:0]), // Use lower 2 bits of shape_type (0-3)
+        .shape_sel(shape_type[1:0]),
         .x0(x0), .y0(y0),
         .x1(x1), .y1(y1),
         .x2(x2), .y2(y2),
-        .r(x2),                     // x2 used as radius for circle
+        .r(x2),
         .fill_enable(fill_enable),
         .color(color),
         .px(pixel_x),
@@ -115,7 +72,6 @@ module top_level (
     );
 
     // Instantiate framebuffer
-    // Stores 256x256x24-bit pixels from rasterizer, supports readback
     framebuffer fb_inst (
         .clk(clk),
         .rst(rst),
@@ -129,10 +85,7 @@ module top_level (
         .read_color(read_color)
     );
 
-    // Command ready signal (placeholder, as command_interface lacks backpressure)
     assign cmd_ready = 1'b1;
-
-    // Done signal from rasterizer
     assign done = raster_done;
 
 endmodule
