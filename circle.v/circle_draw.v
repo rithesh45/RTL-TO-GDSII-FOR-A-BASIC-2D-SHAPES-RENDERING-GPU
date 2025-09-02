@@ -1,6 +1,6 @@
 `timescale 1ns/1ps
 
-module circle_draw (
+module circle(
     input wire        clk,
     input wire        rst,
     input wire        start,
@@ -31,7 +31,7 @@ module circle_draw (
     wire [23:0] line_pixel_color;
 
     // Instantiate line_draw module
-    line_draw line_draw_inst (
+    line line_draw_inst (
         .clk(clk),
         .reset(rst),
         .start(line_start),
